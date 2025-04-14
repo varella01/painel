@@ -1,41 +1,7 @@
-<?php
-session_start();
-
-$arquivo = 'dados.json';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = json_decode(file_get_contents("php://input"), true);
-    file_put_contents($arquivo, json_encode($data));
-    echo json_encode(['status' => 'salvo']);
-    exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    if (isset($_GET['action']) && $_GET['action'] === 'get') {
-        echo file_get_contents($arquivo);
-        exit;
-    }
-
-    if (isset($_GET['action']) && $_GET['action'] === 'status') {
-        $dados = json_decode(file_get_contents($arquivo), true);
-        echo json_encode(['status' => $dados['status'] ?? 'pendente']);
-        exit;
-    }
-
-    if (isset($_GET['action']) && $_GET['action'] === 'set') {
-        $status = $_GET['status'] ?? 'pendente';
-        $dados = json_decode(file_get_contents($arquivo), true);
-        $dados['status'] = $status;
-        file_put_contents($arquivo, json_encode($dados));
-        echo json_encode(['status' => $status]);
-        exit;
-    }
-}
-?>
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Painel consulta</title>
+  <title>Painel consulta (versão sem servidor)</title>
   <style>
     body { background: #111; color: #0f0; font-family: monospace; padding: 20px; }
     button { margin: 5px; padding: 10px; }
@@ -45,20 +11,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 <body>
   <h2>Painel Sujo – Dados Capturados</h2>
   <div class="box" id="dados">Carregando...</div>
+
   <button onclick="setStatus('autorizado')">Autorizar</button>
   <button onclick="setStatus('negado')">Negar</button>
   <button onclick="setStatus('excluir')">Excluir</button>
 
   <script>
-    async function carregar() {
-      let r = await fetch('api.php?action=get');
-      let j = await r.json();
-      document.getElementById('dados').innerText = JSON.stringify(j, null, 2);
+    const STORAGE_KEY = 'dadosPainel';
+
+    function carregar() {
+      let dados = localStorage.getItem(STORAGE_KEY);
+      if (!dados) {
+        dados = { status: 'pendente', info: 'Exemplo de dados' };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dados));
+      } else {
+        dados = JSON.parse(dados);
+      }
+
+      document.getElementById('dados').innerText = JSON.stringify(dados, null, 2);
     }
 
-    async function setStatus(s) {
-      await fetch('api.php?action=set&status=' + s);
-      alert('Status definido: ' + s);
+    function setStatus(status) {
+      let dados = localStorage.getItem(STORAGE_KEY);
+      dados = dados ? JSON.parse(dados) : {};
+      dados.status = status;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dados));
+      alert('Status definido: ' + status);
+      carregar();
     }
 
     setInterval(carregar, 2000);
