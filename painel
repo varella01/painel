@@ -1,0 +1,34 @@
+<?php
+session_start();
+
+$arquivo = 'dados.json';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $data = json_decode(file_get_contents("php://input"), true);
+    file_put_contents($arquivo, json_encode($data));
+    echo json_encode(['status' => 'salvo']);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if (isset($_GET['action']) && $_GET['action'] === 'get') {
+        echo file_get_contents($arquivo);
+        exit;
+    }
+
+    if (isset($_GET['action']) && $_GET['action'] === 'status') {
+        $dados = json_decode(file_get_contents($arquivo), true);
+        echo json_encode(['status' => $dados['status'] ?? 'pendente']);
+        exit;
+    }
+
+    if (isset($_GET['action']) && $_GET['action'] === 'set') {
+        $status = $_GET['status'] ?? 'pendente';
+        $dados = json_decode(file_get_contents($arquivo), true);
+        $dados['status'] = $status;
+        file_put_contents($arquivo, json_encode($dados));
+        echo json_encode(['status' => $status]);
+        exit;
+    }
+}
+?>
